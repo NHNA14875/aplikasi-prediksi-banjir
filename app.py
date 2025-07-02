@@ -22,68 +22,28 @@ def setup_page():
         layout="wide",
         initial_sidebar_state="expanded"
     )
-    # CSS Kustom untuk tampilan yang lebih menarik
     st.markdown("""
     <style>
         /* Mengubah font utama */
         html, body, [class*="st-"] {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
         /* Latar belakang utama */
-        .main {
-            background-color: #F7F9FC;
-        }
-
+        .main { background-color: #F7F9FC; }
         /* Header Utama */
-        .main-header {
-            font-size: 2.8rem;
-            font-weight: 700;
-            color: #005A9C; /* Biru tua */
-            text-align: center;
-            padding: 1rem 0;
-        }
-
+        .main-header { font-size: 2.8rem; font-weight: 700; color: #005A9C; text-align: center; padding: 1rem 0; }
         /* Kontainer dengan border dan shadow */
-        .st-emotion-cache-1r4qj8v {
-            border: 1px solid #E0E0E0;
-            border-radius: 10px;
-            padding: 25px !important;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            background-color: #FFFFFF;
-            transition: all 0.3s;
-        }
-        .st-emotion-cache-1r4qj8v:hover {
-            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
-        }
-        
+        .st-emotion-cache-1r4qj8v { border: 1px solid #E0E0E0; border-radius: 10px; padding: 25px !important; box-shadow: 0 4px 12px rgba(0,0,0,0.08); background-color: #FFFFFF; transition: all 0.3s; }
+        .st-emotion-cache-1r4qj8v:hover { box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
         /* Tombol Utama */
-        .stButton>button {
-            border: none;
-            border-radius: 10px;
-            color: #FFFFFF;
-            background: linear-gradient(90deg, #0078D4, #005A9C);
-            padding: 12px 24px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            transition: all 0.3s;
-        }
-        .stButton>button:hover {
-            box-shadow: 0 4px 15px rgba(0, 120, 212, 0.4);
-            transform: translateY(-2px);
-        }
-
+        .stButton>button { border: none; border-radius: 10px; color: #FFFFFF; background: linear-gradient(90deg, #0078D4, #005A9C); padding: 12px 24px; font-size: 1.2rem; font-weight: bold; transition: all 0.3s; }
+        .stButton>button:hover { box-shadow: 0 4px 15px rgba(0, 120, 212, 0.4); transform: translateY(-2px); }
         /* Sidebar */
-        .st-emotion-cache-16txtl3 {
-            background-color: #FFFFFF;
-            border-right: 1px solid #E0E0E0;
-        }
-        
+        .st-emotion-cache-16txtl3 { background-color: #FFFFFF; border-right: 1px solid #E0E0E0; }
         /* Hasil Prediksi */
         .result-safe { border-left: 8px solid #28a745; padding: 20px; background-color: #F0FFF4; border-radius: 8px; }
         .result-warn { border-left: 8px solid #ffc107; padding: 20px; background-color: #FFFBEA; border-radius: 8px; }
         .result-danger { border-left: 8px solid #dc3545; padding: 20px; background-color: #FFF5F5; border-radius: 8px; }
-
     </style>
     """, unsafe_allow_html=True)
 
@@ -131,6 +91,7 @@ def train_and_get_model():
 # =============================================================================
 @st.cache_resource
 def get_ocr_reader():
+    """Menginisialisasi EasyOCR reader dan menyimpannya di cache."""
     return easyocr.Reader(['en'])
 
 def read_water_level_from_image(image_file, reader):
@@ -185,7 +146,6 @@ setup_page()
 
 # --- Sidebar ---
 with st.sidebar:
-    # PERBAIKAN: Menggunakan link gambar yang valid
     st.image("https://www.streamlit.io/images/brand/streamlit-logo-secondary-colormark-darktext.png", width=150)
     st.title("Tentang Proyek")
     st.markdown("Aplikasi ini adalah implementasi dari proposal UAS **'Prediksi Banjir Berbasis Machine Learning'**.")
@@ -198,15 +158,14 @@ with st.sidebar:
     st.write("Dosen Pengampu:")
     st.write("**Dr. Ricardus Anggi P.**")
     st.markdown("---")
-    st.success("Aplikasi v4.3 (Link Gambar Diperbaiki)")
+    st.success("Aplikasi v4.4 (Lazy Loading)")
 
 # --- Halaman Utama ---
 st.markdown('<p class="main-header">Sistem Peringatan Dini Banjir</p>', unsafe_allow_html=True)
 st.write("") # Spasi
 
-with st.spinner("Mempersiapkan model AI dan OCR..."):
+with st.spinner("Mempersiapkan model AI prediksi..."):
     model, scaler = train_and_get_model()
-    reader = get_ocr_reader()
 
 col1, col2 = st.columns((1, 1), gap="large")
 
@@ -220,7 +179,11 @@ with col1:
         uploaded_file = st.file_uploader("Unggah foto papan duga air...", type=["jpg", "jpeg", "png"], label_visibility="collapsed")
         
         if uploaded_file:
-            level, image, status_text = read_water_level_from_image(uploaded_file, reader)
+            # PERBAIKAN: Muat model OCR hanya saat dibutuhkan (Lazy Loading)
+            with st.spinner("Menganalisis gambar dengan OCR..."):
+                reader = get_ocr_reader()
+                level, image, status_text = read_water_level_from_image(uploaded_file, reader)
+            
             if level is not None and image is not None:
                 st.image(image, caption=f"Gambar diunggah.", use_column_width=True)
                 st.write(f"**Ketinggian Air Terbaca (OCR):** `{status_text}`")
