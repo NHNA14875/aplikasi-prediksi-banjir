@@ -22,31 +22,24 @@ def setup_page():
         layout="wide",
         initial_sidebar_state="expanded"
     )
-    # PERBAIKAN: CSS menggunakan variabel tema Streamlit (--background-color, --secondary-background-color, --text-color)
+    # CSS yang menggunakan variabel tema Streamlit
     st.markdown("""
     <style>
         /* Mengubah font utama */
         html, body, [class*="st-"] {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
-        /* Latar belakang utama menggunakan variabel tema */
-        .main {
-            background-color: var(--background-color);
-        }
-
         /* Header Utama */
         .main-header {
             font-size: 2.8rem;
             font-weight: 700;
-            color: var(--primary-color); /* Menggunakan warna aksen tema */
+            color: var(--primary-color);
             text-align: center;
             padding: 1rem 0;
         }
-
-        /* Kontainer dengan border dan shadow, latar belakang dari tema */
+        /* Kontainer dengan border dan shadow yang beradaptasi */
         .st-emotion-cache-1r4qj8v {
-            border: 1px solid var(--gray-200);
+            border: 1px solid var(--gray-80);
             border-radius: 10px;
             padding: 25px !important;
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
@@ -56,34 +49,27 @@ def setup_page():
         .st-emotion-cache-1r4qj8v:hover {
             box-shadow: 0 6px 16px rgba(0,0,0,0.12);
         }
-        
         /* Tombol Utama */
         .stButton>button {
             border: none;
             border-radius: 10px;
-            color: #FFFFFF;
-            background: linear-gradient(90deg, var(--primary-color), #005A9C);
+            color: white;
+            background: var(--primary-color);
             padding: 12px 24px;
             font-size: 1.2rem;
             font-weight: bold;
             transition: all 0.3s;
         }
         .stButton>button:hover {
-            box-shadow: 0 4px 15px rgba(0, 120, 212, 0.4);
+            filter: brightness(1.2);
             transform: translateY(-2px);
         }
-
-        /* Sidebar menggunakan warna tema */
-        .st-emotion-cache-16txtl3 {
-            background-color: var(--secondary-background-color);
-            border-right: 1px solid var(--gray-200);
-        }
-        
-        /* Hasil Prediksi dengan warna semi-transparan agar cocok di kedua mode */
-        .result-safe { border-left: 8px solid #28a745; padding: 20px; background-color: rgba(40, 167, 69, 0.1); border-radius: 8px; }
-        .result-warn { border-left: 8px solid #ffc107; padding: 20px; background-color: rgba(255, 193, 7, 0.1); border-radius: 8px; }
-        .result-danger { border-left: 8px solid #dc3545; padding: 20px; background-color: rgba(220, 53, 69, 0.1); border-radius: 8px; }
-
+        /* Hasil Prediksi yang beradaptasi */
+        .result-safe { border-left: 8px solid #28a745; padding: 20px; border-radius: 8px; background-color: var(--secondary-background-color); }
+        .result-warn { border-left: 8px solid #ffc107; padding: 20px; border-radius: 8px; background-color: var(--secondary-background-color); }
+        .result-danger { border-left: 8px solid #dc3545; padding: 20px; border-radius: 8px; background-color: var(--secondary-background-color); }
+        .result-safe h4, .result-warn h4, .result-danger h4 { color: var(--text-color); }
+        .result-safe p, .result-warn p, .result-danger p { color: var(--text-color); }
     </style>
     """, unsafe_allow_html=True)
 
@@ -193,7 +179,7 @@ with st.sidebar:
     st.write("Dosen Pengampu:")
     st.write("**Dr. Ricardus Anggi P.**")
     st.markdown("---")
-    st.info("Aplikasi v5.1 (Dark Mode + Layout)")
+    st.info("Aplikasi v6.0 (Koreksi OCR)")
 
 st.markdown('<p class="main-header">Sistem Peringatan Dini Banjir</p>', unsafe_allow_html=True)
 
@@ -207,10 +193,14 @@ with col1:
         st.subheader("1. Input Data Lingkungan")
         st.markdown("##### 🌧️ Curah Hujan (mm)")
         curah_hujan = st.slider("Geser untuk mengatur perkiraan curah hujan harian.", 0, 400, 150, label_visibility="collapsed")
-        st.markdown("<br>", unsafe_allow_html=True)
+        
         st.markdown("##### 📸 Ketinggian Muka Air (cm)")
         uploaded_file = st.file_uploader("Unggah foto papan duga air...", type=["jpg", "jpeg", "png"], label_visibility="collapsed")
         
+        # Inisialisasi variabel di session state
+        if 'tinggi_air_final' not in st.session_state:
+            st.session_state.tinggi_air_final = 0
+            
         if uploaded_file:
             with st.spinner("Menganalisis gambar dengan OCR..."):
                 reader = get_ocr_reader()
@@ -219,11 +209,18 @@ with col1:
             if level is not None and image is not None:
                 st.image(image, caption=f"Gambar diunggah.", use_column_width=True)
                 st.write(f"**Ketinggian Air Terbaca (OCR):** `{status_text}`")
-                st.session_state.tinggi_air_cv = level
+                
+                # FITUR BARU: Opsi untuk Koreksi Manual
+                koreksi = st.checkbox("✔️ Koreksi hasil OCR?")
+                if koreksi:
+                    ketinggian_manual = st.number_input("Masukkan ketinggian air yang benar (cm):", min_value=0, value=level)
+                    st.session_state.tinggi_air_final = ketinggian_manual
+                else:
+                    st.session_state.tinggi_air_final = level
             else:
-                st.session_state.tinggi_air_cv = 0
+                st.session_state.tinggi_air_final = 0
         else:
-            st.session_state.tinggi_air_cv = 0
+            st.session_state.tinggi_air_final = 0
 
 with col2:
     with st.container():
@@ -233,16 +230,18 @@ with col2:
 
 st.markdown("---")
 if st.button("🚀 Analisis Risiko Sekarang", use_container_width=True):
-    if 'tinggi_air_cv' in st.session_state and st.session_state.tinggi_air_cv > 0:
-        input_data = np.array([[curah_hujan, st.session_state.tinggi_air_cv]])
+    # Menggunakan nilai final dari session_state
+    if st.session_state.tinggi_air_final > 0:
+        input_data = np.array([[curah_hujan, st.session_state.tinggi_air_final]])
         input_data_scaled = scaler.transform(input_data)
         prediction_score = model.predict(input_data_scaled)[0][0]
         
-        if prediction_score > 0.75:
-            result_placeholder.markdown(f'<div class="result-danger"><h4>Status: AWAS BANJIR 🚨</h4><p>Kombinasi curah hujan dan tinggi muka air sangat berbahaya. Segera lakukan evakuasi.</p><strong>Indeks Risiko: {prediction_score:.2f}</strong></div>', unsafe_allow_html=True)
-        elif prediction_score > 0.4:
-            result_placeholder.markdown(f'<div class="result-warn"><h4>Status: WASPADA ⚠️</h4><p>Kondisi berpotensi menjadi berbahaya. Siapkan langkah-langkah mitigasi.</p><strong>Indeks Risiko: {prediction_score:.2f}</strong></div>', unsafe_allow_html=True)
-        else:
-            result_placeholder.markdown(f'<div class="result-safe"><h4>Status: AMAN ✅</h4><p>Kondisi saat ini terpantau aman.</p><strong>Indeks Risiko: {prediction_score:.2f}</strong></div>', unsafe_allow_html=True)
+        with result_placeholder.container():
+            if prediction_score > 0.75:
+                st.markdown(f'<div class="result-danger"><h4>Status: AWAS BANJIR 🚨</h4><p>Kombinasi curah hujan dan tinggi muka air sangat berbahaya. Segera lakukan evakuasi.</p><strong>Indeks Risiko: {prediction_score:.2f}</strong></div>', unsafe_allow_html=True)
+            elif prediction_score > 0.4:
+                st.markdown(f'<div class="result-warn"><h4>Status: WASPADA ⚠️</h4><p>Kondisi berpotensi menjadi berbahaya. Siapkan langkah-langkah mitigasi.</p><strong>Indeks Risiko: {prediction_score:.2f}</strong></div>', unsafe_allow_html=True)
+            else:
+                st.markdown(f'<div class="result-safe"><h4>Status: AMAN ✅</h4><p>Kondisi saat ini terpantau aman.</p><strong>Indeks Risiko: {prediction_score:.2f}</strong></div>', unsafe_allow_html=True)
     else:
         st.warning("Mohon unggah gambar terlebih dahulu untuk analisis ketinggian air.")
