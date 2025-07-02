@@ -1,6 +1,6 @@
-streamlit
-pandas
-numpy
-tensorflow-cpu
-opencv-python-headless
-Pillow
+streamlit==1.35.0
+pandas==2.0.3
+numpy==1.24.4
+tensorflow-cpu==2.15.0
+opencv-python-headless==4.8.0.76
+Pillow==10.1.0
