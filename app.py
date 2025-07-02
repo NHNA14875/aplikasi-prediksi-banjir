@@ -110,7 +110,7 @@ with st.spinner("Mempersiapkan model AI tingkat lanjut untuk UAS..."):
     model, scaler = train_and_get_model()
 
 st.title("✅ Aplikasi Prediksi Banjir v3.0 (Versi Final UAS)")
-st.write(f"AI telah dilatih dengan **{len(model.history.epoch)} skenario realistis** untuk memberikan peringatan dini 3-level.")
+st.write(f"AI telah dilatih dengan **2500 skenario realistis** untuk memberikan peringatan dini 3-level.")
 st.markdown("---")
 
 st.header("1. Input Data")
