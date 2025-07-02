@@ -172,7 +172,7 @@ with st.sidebar:
     st.markdown("Aplikasi ini adalah implementasi dari proposal UAS **'Prediksi Banjir Berbasis Machine Learning'**.")
     st.markdown("---")
     st.subheader("Disusun oleh:")
-    st.write("**YNaufal Hanif Noorvietriya Achmadi**")
+    st.write("**Naufal Hanif Noorvietriya Achmadi**")
     st.write("**Muhammad Daffa Tri Putranto**")
     st.write("**Aji Bayu Seno**")
     st.write("**Yobby Azriel Iqdhi Vianta**")
