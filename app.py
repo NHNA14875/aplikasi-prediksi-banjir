@@ -4,7 +4,7 @@ import numpy as np
 import cv2
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.layers import Dense
 from tensorflow.keras.optimizers import Adam
 from PIL import Image
 from sklearn.preprocessing import StandardScaler
@@ -12,34 +12,83 @@ import easyocr
 import re
 
 # =============================================================================
-# Bagian 0: Konfigurasi Halaman dan Gaya (CSS)
+# Bagian 0: Konfigurasi Halaman dan Gaya (CSS Cerdas)
 # =============================================================================
 def setup_page():
-    """Mengatur konfigurasi halaman dan menyuntikkan CSS kustom."""
+    """Mengatur konfigurasi halaman dan menyuntikkan CSS yang sadar tema."""
     st.set_page_config(
         page_title="Analisis Risiko Banjir",
         page_icon="🌊",
         layout="wide",
         initial_sidebar_state="expanded"
     )
+    # PERBAIKAN: CSS menggunakan variabel tema Streamlit (--background-color, --secondary-background-color, --text-color)
     st.markdown("""
     <style>
-        html, body, [class*="st-"] { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .main { background-color: #F7F9FC; }
-        .main-header { font-size: 2.8rem; font-weight: 700; color: #005A9C; text-align: center; padding: 1rem 0; }
-        .st-emotion-cache-1r4qj8v { border: 1px solid #E0E0E0; border-radius: 10px; padding: 25px !important; box-shadow: 0 4px 12px rgba(0,0,0,0.08); background-color: #FFFFFF; transition: all 0.3s; }
-        .st-emotion-cache-1r4qj8v:hover { box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
-        .stButton>button { border: none; border-radius: 10px; color: #FFFFFF; background: linear-gradient(90deg, #0078D4, #005A9C); padding: 12px 24px; font-size: 1.2rem; font-weight: bold; transition: all 0.3s; }
-        .stButton>button:hover { box-shadow: 0 4px 15px rgba(0, 120, 212, 0.4); transform: translateY(-2px); }
-        .st-emotion-cache-16txtl3 { background-color: #FFFFFF; border-right: 1px solid #E0E0E0; }
-        .result-safe { border-left: 8px solid #28a745; padding: 20px; background-color: #F0FFF4; border-radius: 8px; }
-        .result-warn { border-left: 8px solid #ffc107; padding: 20px; background-color: #FFFBEA; border-radius: 8px; }
-        .result-danger { border-left: 8px solid #dc3545; padding: 20px; background-color: #FFF5F5; border-radius: 8px; }
+        /* Mengubah font utama */
+        html, body, [class*="st-"] {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Latar belakang utama menggunakan variabel tema */
+        .main {
+            background-color: var(--background-color);
+        }
+
+        /* Header Utama */
+        .main-header {
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: var(--primary-color); /* Menggunakan warna aksen tema */
+            text-align: center;
+            padding: 1rem 0;
+        }
+
+        /* Kontainer dengan border dan shadow, latar belakang dari tema */
+        .st-emotion-cache-1r4qj8v {
+            border: 1px solid var(--gray-200);
+            border-radius: 10px;
+            padding: 25px !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            background-color: var(--secondary-background-color);
+            transition: all 0.3s;
+        }
+        .st-emotion-cache-1r4qj8v:hover {
+            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+        }
+        
+        /* Tombol Utama */
+        .stButton>button {
+            border: none;
+            border-radius: 10px;
+            color: #FFFFFF;
+            background: linear-gradient(90deg, var(--primary-color), #005A9C);
+            padding: 12px 24px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .stButton>button:hover {
+            box-shadow: 0 4px 15px rgba(0, 120, 212, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* Sidebar menggunakan warna tema */
+        .st-emotion-cache-16txtl3 {
+            background-color: var(--secondary-background-color);
+            border-right: 1px solid var(--gray-200);
+        }
+        
+        /* Hasil Prediksi dengan warna semi-transparan agar cocok di kedua mode */
+        .result-safe { border-left: 8px solid #28a745; padding: 20px; background-color: rgba(40, 167, 69, 0.1); border-radius: 8px; }
+        .result-warn { border-left: 8px solid #ffc107; padding: 20px; background-color: rgba(255, 193, 7, 0.1); border-radius: 8px; }
+        .result-danger { border-left: 8px solid #dc3545; padding: 20px; background-color: rgba(220, 53, 69, 0.1); border-radius: 8px; }
+
     </style>
     """, unsafe_allow_html=True)
 
 # =============================================================================
-# Bagian 1: Modul AI (Model Lebih Ramping untuk Efisiensi Memori)
+# Bagian 1: Modul AI (Logika Tetap Sama)
 # =============================================================================
 @st.cache_resource
 def train_and_get_model():
@@ -67,14 +116,11 @@ def train_and_get_model():
     y = df['status'].values
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
-    
-    # PERBAIKAN: Model lebih kecil untuk menghemat memori
     model = Sequential([
-        Dense(32, activation='relu', input_shape=(2,)),
-        Dense(16, activation='relu'),
+        Dense(16, activation='relu', input_shape=(2,)),
+        Dense(8, activation='relu'),
         Dense(1, activation='linear')
     ])
-    
     optimizer = Adam(learning_rate=0.001)
     model.compile(optimizer=optimizer, loss='mean_squared_error')
     model.fit(X_scaled, y, epochs=200, batch_size=64, verbose=0)
@@ -147,7 +193,7 @@ with st.sidebar:
     st.write("Dosen Pengampu:")
     st.write("**Dr. Ricardus Anggi P.**")
     st.markdown("---")
-    st.success("Aplikasi v4.5 (Optimasi Memori)")
+    st.info("Aplikasi v5.1 (Dark Mode + Layout)")
 
 st.markdown('<p class="main-header">Sistem Peringatan Dini Banjir</p>', unsafe_allow_html=True)
 
@@ -200,4 +246,3 @@ if st.button("🚀 Analisis Risiko Sekarang", use_container_width=True):
             result_placeholder.markdown(f'<div class="result-safe"><h4>Status: AMAN ✅</h4><p>Kondisi saat ini terpantau aman.</p><strong>Indeks Risiko: {prediction_score:.2f}</strong></div>', unsafe_allow_html=True)
     else:
         st.warning("Mohon unggah gambar terlebih dahulu untuk analisis ketinggian air.")
-
