@@ -24,23 +24,14 @@ def setup_page():
     )
     st.markdown("""
     <style>
-        /* Mengubah font utama */
-        html, body, [class*="st-"] {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        /* Latar belakang utama */
+        html, body, [class*="st-"] { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .main { background-color: #F7F9FC; }
-        /* Header Utama */
         .main-header { font-size: 2.8rem; font-weight: 700; color: #005A9C; text-align: center; padding: 1rem 0; }
-        /* Kontainer dengan border dan shadow */
         .st-emotion-cache-1r4qj8v { border: 1px solid #E0E0E0; border-radius: 10px; padding: 25px !important; box-shadow: 0 4px 12px rgba(0,0,0,0.08); background-color: #FFFFFF; transition: all 0.3s; }
         .st-emotion-cache-1r4qj8v:hover { box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
-        /* Tombol Utama */
         .stButton>button { border: none; border-radius: 10px; color: #FFFFFF; background: linear-gradient(90deg, #0078D4, #005A9C); padding: 12px 24px; font-size: 1.2rem; font-weight: bold; transition: all 0.3s; }
         .stButton>button:hover { box-shadow: 0 4px 15px rgba(0, 120, 212, 0.4); transform: translateY(-2px); }
-        /* Sidebar */
         .st-emotion-cache-16txtl3 { background-color: #FFFFFF; border-right: 1px solid #E0E0E0; }
-        /* Hasil Prediksi */
         .result-safe { border-left: 8px solid #28a745; padding: 20px; background-color: #F0FFF4; border-radius: 8px; }
         .result-warn { border-left: 8px solid #ffc107; padding: 20px; background-color: #FFFBEA; border-radius: 8px; }
         .result-danger { border-left: 8px solid #dc3545; padding: 20px; background-color: #FFF5F5; border-radius: 8px; }
@@ -48,7 +39,7 @@ def setup_page():
     """, unsafe_allow_html=True)
 
 # =============================================================================
-# Bagian 1: Modul AI (Logika Tetap Sama)
+# Bagian 1: Modul AI (Model Lebih Ramping untuk Efisiensi Memori)
 # =============================================================================
 @st.cache_resource
 def train_and_get_model():
@@ -76,13 +67,16 @@ def train_and_get_model():
     y = df['status'].values
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
+    
+    # PERBAIKAN: Model lebih kecil untuk menghemat memori
     model = Sequential([
-        Dense(64, activation='relu', input_shape=(2,)), Dropout(0.2),
-        Dense(32, activation='relu'), Dropout(0.2),
-        Dense(16, activation='relu'), Dense(1, activation='linear')
+        Dense(32, activation='relu', input_shape=(2,)),
+        Dense(16, activation='relu'),
+        Dense(1, activation='linear')
     ])
+    
     optimizer = Adam(learning_rate=0.001)
-    model.compile(optimizer=optimizer, loss='mean_squared_error', metrics=['mae'])
+    model.compile(optimizer=optimizer, loss='mean_squared_error')
     model.fit(X_scaled, y, epochs=200, batch_size=64, verbose=0)
     return model, scaler
 
@@ -91,7 +85,6 @@ def train_and_get_model():
 # =============================================================================
 @st.cache_resource
 def get_ocr_reader():
-    """Menginisialisasi EasyOCR reader dan menyimpannya di cache."""
     return easyocr.Reader(['en'])
 
 def read_water_level_from_image(image_file, reader):
@@ -118,8 +111,7 @@ def read_water_level_from_image(image_file, reader):
         min_distance = float('inf')
         for (bbox, text, prob) in results:
             cleaned_text = re.sub(r'[^\d.-]', '', text)
-            if not cleaned_text or cleaned_text == '.' or cleaned_text == '-':
-                continue
+            if not cleaned_text or cleaned_text == '.' or cleaned_text == '-': continue
             try:
                 value = float(cleaned_text)
                 (tl, tr, br, bl) = bbox
@@ -128,8 +120,7 @@ def read_water_level_from_image(image_file, reader):
                 if distance < min_distance:
                     min_distance = distance
                     best_match_value = abs(int(value * 100)) if abs(value) < 10 else abs(int(value))
-            except ValueError:
-                continue
+            except ValueError: continue
         if best_match_value is None:
             st.warning("OCR tidak dapat memvalidasi angka yang relevan. Menggunakan nilai default.")
             return 150, pil_image, "Tidak terbaca"
@@ -139,12 +130,10 @@ def read_water_level_from_image(image_file, reader):
         return None, None, None
 
 # =============================================================================
-# Bagian 3: Tampilan Aplikasi (User Interface) - VERSI BARU
+# Bagian 3: Tampilan Aplikasi (User Interface)
 # =============================================================================
-
 setup_page()
 
-# --- Sidebar ---
 with st.sidebar:
     st.image("https://www.streamlit.io/images/brand/streamlit-logo-secondary-colormark-darktext.png", width=150)
     st.title("Tentang Proyek")
@@ -158,11 +147,9 @@ with st.sidebar:
     st.write("Dosen Pengampu:")
     st.write("**Dr. Ricardus Anggi P.**")
     st.markdown("---")
-    st.success("Aplikasi v4.4 (Lazy Loading)")
+    st.success("Aplikasi v4.5 (Optimasi Memori)")
 
-# --- Halaman Utama ---
 st.markdown('<p class="main-header">Sistem Peringatan Dini Banjir</p>', unsafe_allow_html=True)
-st.write("") # Spasi
 
 with st.spinner("Mempersiapkan model AI prediksi..."):
     model, scaler = train_and_get_model()
@@ -179,7 +166,6 @@ with col1:
         uploaded_file = st.file_uploader("Unggah foto papan duga air...", type=["jpg", "jpeg", "png"], label_visibility="collapsed")
         
         if uploaded_file:
-            # PERBAIKAN: Muat model OCR hanya saat dibutuhkan (Lazy Loading)
             with st.spinner("Menganalisis gambar dengan OCR..."):
                 reader = get_ocr_reader()
                 level, image, status_text = read_water_level_from_image(uploaded_file, reader)
@@ -214,3 +200,4 @@ if st.button("🚀 Analisis Risiko Sekarang", use_container_width=True):
             result_placeholder.markdown(f'<div class="result-safe"><h4>Status: AMAN ✅</h4><p>Kondisi saat ini terpantau aman.</p><strong>Indeks Risiko: {prediction_score:.2f}</strong></div>', unsafe_allow_html=True)
     else:
         st.warning("Mohon unggah gambar terlebih dahulu untuk analisis ketinggian air.")
+
