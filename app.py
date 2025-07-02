@@ -185,21 +185,20 @@ setup_page()
 
 # --- Sidebar ---
 with st.sidebar:
-    st.image("https://i.imgur.com/h4Amw2v.png", width=100)
+    # PERBAIKAN: Menggunakan link gambar yang valid
+    st.image("https://www.streamlit.io/images/brand/streamlit-logo-secondary-colormark-darktext.png", width=150)
     st.title("Tentang Proyek")
     st.markdown("Aplikasi ini adalah implementasi dari proposal UAS **'Prediksi Banjir Berbasis Machine Learning'**.")
     st.markdown("---")
     st.subheader("Disusun oleh:")
     st.write("**Yobby Azriel Iqdhi Vianta**")
-    st.write("**Naufal Hanif N A**")
-    st.write("**Aji Bayu Seno**")
-    st.write("**Dhimas Bagus Maulana**")
-    st.write("**Daffa Tri**")
+    st.write("**A11.2023.14890**")
+    st.write("**A11.4408**")
     st.markdown("---")
     st.write("Dosen Pengampu:")
     st.write("**Dr. Ricardus Anggi P.**")
     st.markdown("---")
-    st.success("Aplikasi v4.2 (UI/UX Update)")
+    st.success("Aplikasi v4.3 (Link Gambar Diperbaiki)")
 
 # --- Halaman Utama ---
 st.markdown('<p class="main-header">Sistem Peringatan Dini Banjir</p>', unsafe_allow_html=True)
