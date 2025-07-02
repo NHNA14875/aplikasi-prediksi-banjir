@@ -11,9 +11,8 @@ from sklearn.preprocessing import StandardScaler
 import easyocr
 import re
 
-# =============================================================================
-# Bagian 0: Konfigurasi Halaman dan Gaya (CSS Cerdas)
-# =============================================================================
+# Bagian 0: Konfigurasi Halaman dan Gaya
+
 def setup_page():
     """Mengatur konfigurasi halaman dan menyuntikkan CSS yang sadar tema."""
     st.set_page_config(
@@ -22,7 +21,7 @@ def setup_page():
         layout="wide",
         initial_sidebar_state="expanded"
     )
-    # CSS yang menggunakan variabel tema Streamlit
+    # CSS untuk variabel tema Streamlit
     st.markdown("""
     <style>
         /* Mengubah font utama */
@@ -73,9 +72,8 @@ def setup_page():
     </style>
     """, unsafe_allow_html=True)
 
-# =============================================================================
-# Bagian 1: Modul AI (Logika Tetap Sama)
-# =============================================================================
+# Bagian 1: Modul AI 
+
 @st.cache_resource
 def train_and_get_model():
     n_samples = 2500
@@ -112,9 +110,8 @@ def train_and_get_model():
     model.fit(X_scaled, y, epochs=200, batch_size=64, verbose=0)
     return model, scaler
 
-# =============================================================================
-# Bagian 2: Modul Computer Vision (Logika Tetap Sama)
-# =============================================================================
+# Bagian 2: Modul Computer Vision 
+
 @st.cache_resource
 def get_ocr_reader():
     return easyocr.Reader(['en'])
@@ -161,9 +158,8 @@ def read_water_level_from_image(image_file, reader):
         st.error(f"Terjadi kesalahan pada modul Computer Vision: {e}")
         return None, None, None
 
-# =============================================================================
 # Bagian 3: Tampilan Aplikasi (User Interface)
-# =============================================================================
+
 setup_page()
 
 with st.sidebar:
@@ -212,7 +208,7 @@ with col1:
                 st.image(image, caption=f"Gambar diunggah.", use_column_width=True)
                 st.write(f"**Ketinggian Air Terbaca (OCR):** `{status_text}`")
                 
-                # FITUR BARU: Opsi untuk Koreksi Manual
+                # Fitur opsi untuk Koreksi Manual
                 koreksi = st.checkbox("✔️ Koreksi hasil OCR?")
                 if koreksi:
                     ketinggian_manual = st.number_input("Masukkan ketinggian air yang benar (cm):", min_value=0, value=level)
