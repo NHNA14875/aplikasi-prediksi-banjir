@@ -135,7 +135,7 @@ st.set_page_config(page_title="Prediksi Banjir v2.0", page_icon="🧠", layout="
 model, scaler = train_and_get_model()
 
 st.title("🧠 Aplikasi Prediksi Banjir v2.0 (AI Super Cerdas)")
-st.write(f"Versi ini menggunakan AI yang dilatih pada **{len(model.weights[0])} skenario data kompleks**.")
+st.write(f"Versi ini menggunakan AI yang dilatih pada **2000 skenario data kompleks**.")
 st.markdown("---")
 
 st.header("1. Input Data")
